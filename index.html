@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NY HVAC Rebate Qualifier</title>
+  <style>
+    :root{
+      --bg:#0b1020; --panel:#121933; --muted:#778; --text:#f5f7ff; --accent:#74c0fc; --ok:#37b24d; --warn:#f08c00; --err:#e03131; --chip:#1b2447;
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 800px at 10% -10%, #1e264d 0%, transparent 70%),
+                   radial-gradient(900px 600px at 110% 10%, #112055 0%, transparent 60%),
+                   var(--bg);
+         color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    }
+    header{max-width:960px;margin:24px auto 0;padding:0 16px}
+    h1{font-size:clamp(24px,3vw,36px);letter-spacing:.3px;margin:0 0 6px}
+    p.lead{margin:0 0 18px;color:#c7ceff}
+    main{max-width:960px;margin:0 auto 48px;padding:0 16px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+          border:1px solid rgba(255,255,255,.06);box-shadow:0 10px 30px rgba(0,0,0,.25);
+          border-radius:var(--radius);padding:18px}
+    .grid{display:grid;gap:16px}
+    @media(min-width:880px){.grid-cols-2{grid-template-columns:1fr 1fr}}
+    fieldset{border:0;margin:0;padding:0;display:none}
+    fieldset.active{display:block;animation:fade .25s ease-out}
+    .controls{display:flex;gap:12px;justify-content:space-between;margin-top:12px}
+    button{appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer}
+    .btn{background:#243266;color:var(--text)}
+    .btn:hover{filter:brightness(1.05)}
+    .btn.primary{background:linear-gradient(180deg,#2a5fff,#1447d9)}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.15)}
+    .step{display:flex;align-items:center;gap:10px;color:var(--muted)}
+    .step .dot{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;border:1px solid rgba(255,255,255,.25)}
+    .step .dot.active{background:var(--accent);border-color:transparent;color:#00122b;font-weight:800}
+    label{display:block;font-weight:600;margin:12px 0 6px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    input[type=text],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#0e1430;color:var(--text)}
+    .hint{font-size:.9rem;color:#c7ceff9c}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{padding:8px 10px;background:var(--chip);border:1px solid rgba(255,255,255,.12);border-radius:999px;font-size:.9rem}
+    .results{display:none}
+    .results.active{display:block}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:.8rem;font-weight:700}
+    .badge.ok{background:rgba(55,178,77,.15);border:1px solid rgba(55,178,77,.45);color:#b8f2c2}
+    .badge.warn{background:rgba(240,140,0,.15);border:1px solid rgba(240,140,0,.45);color:#ffd8a8}
+    .prog{height:8px;background:#0d1533;border-radius:999px;overflow:hidden}
+    .prog > i{display:block;height:100%;background:linear-gradient(90deg, #2a5fff, #74c0fc)}
+    .note{padding:10px 12px;border-radius:12px;background:#101735;border:1px dashed rgba(255,255,255,.15);color:#cbd3ff}
+    a{color:#9ecbff}
+    footer{max-width:960px;margin:32px auto;padding:0 16px;color:#99a0d7}
+    @keyframes fade{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Find Your HVAC Rebates (Western & Central NY)</h1>
+    <p class="lead">Answer a few quick questions to see which programs you likely qualify for—then follow the links to confirm and apply.</p>
+    <div class="grid grid-cols-2">
+      <div class="card">
+        <div class="step"><span class="dot active" id="dot-1">1</span> Basics</div>
+        <div class="step"><span class="dot" id="dot-2">2</span> Home</div>
+        <div class="step"><span class="dot" id="dot-3">3</span> Income</div>
+        <div class="step"><span class="dot" id="dot-4">4</span> Project</div>
+        <div class="prog" style="margin-top:10px"><i id="progbar" style="width:25%"></i></div>
+      </div>
+      <div class="card">
+        <div class="note">This tool summarizes public program rules. Final eligibility and amounts depend on utility and NYSERDA approval. Always confirm details on official portals.
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="card">
+    <form id="flow" novalidate>
+      <!-- STEP 1: BASICS -->
+      <fieldset class="active" data-step="1">
+        <label for="county">Your county (or nearest city)</label>
+        <input id="county" name="county" type="text" placeholder="e.g., Erie (Buffalo), Onondaga (Syracuse), Broome (Binghamton), Warren/Washington (Adirondacks)" required>
+        <div class="row">
+          <div style="flex:1">
+            <label for="utility">Your utility</label>
+            <select id="utility" name="utility" required>
+              <option value="">Select…</option>
+              <option>National Grid</option>
+              <option>NYSEG</option>
+              <option>RG&E</option>
+              <option value="other">Other / Not sure</option>
+            </select>
+            <div class="hint">Programs here focus on National Grid, NYSEG, and RG&E territories.</div>
+          </div>
+          <div style="flex:1">
+            <label for="resType">Residence type</label>
+            <select id="resType" name="resType" required>
+              <option value="">Select…</option>
+              <option value="single">Single-family</option>
+              <option value="2to4">2–4 unit</option>
+              <option value="5plus">5+ units (multifamily)</option>
+            </select>
+          </div>
+        </div>
+        <div class="controls"><span></span>
+          <button class="btn primary" data-next>Next</button>
+        </div>
+      </fieldset>
+
+      <!-- STEP 2: HOME -->
+      <fieldset data-step="2">
+        <label>Are you the homeowner or a renter?</label>
+        <div class="row">
+          <label><input type="radio" name="tenure" value="owner" required> Homeowner</label>
+          <label><input type="radio" name="tenure" value="renter" required> Renter</label>
+          <label><input type="radio" name="tenure" value="landlord" required> Landlord/Property manager</label>
+        </div>
+        <label for="heatFuel">Primary heating fuel currently</label>
+        <select id="heatFuel" required>
+          <option value="">Select…</option>
+          <option>Natural gas</option>
+          <option>Oil</option>
+          <option>Propane</option>
+          <option>Electric (baseboard/resistance)</option>
+          <option>Wood/Pellet</option>
+        </select>
+        <div class="controls">
+          <button class="btn ghost" data-prev>Back</button>
+          <button class="btn primary" data-next>Next</button>
+        </div>
+      </fieldset>
+
+      <!-- STEP 3: INCOME -->
+      <fieldset data-step="3">
+        <label>Household income band</label>
+        <div class="row">
+          <label><input type="radio" name="income" value="lmi" required> Low/Moderate (about ≤80% of local median)</label>
+          <label><input type="radio" name="income" value="above" required> Above that</label>
+          <label><input type="radio" name="income" value="unsure" required> Not sure</label>
+        </div>
+        <div class="hint">If you’re unsure, pick “Not sure.” The tool will show both standard and LMI paths where applicable.</div>
+        <div class="controls">
+          <button class="btn ghost" data-prev>Back</button>
+          <button class="btn primary" data-next>Next</button>
+        </div>
+      </fieldset>
+
+      <!-- STEP 4: PROJECT -->
+      <fieldset data-step="4">
+        <label>What are you planning?</label>
+        <div class="row">
+          <label><input type="checkbox" name="proj" value="ashp"> Air-source heat pump (ducted/mini-split)</label>
+          <label><input type="checkbox" name="proj" value="gshp"> Geothermal heat pump</label>
+          <label><input type="checkbox" name="proj" value="hpwh"> Heat pump water heater</label>
+          <label><input type="checkbox" name="proj" value="weather"> Insulation & air sealing</label>
+          <label><input type="checkbox" name="proj" value="controls"> Smart thermostat / controls</label>
+          <label><input type="checkbox" name="proj" value="furnace"> High-efficiency gas furnace/boiler</label>
+        </div>
+        <label><input type="checkbox" id="elecUp"/> My home likely needs an electrical panel/service upgrade</label>
+        <div class="controls">
+          <button class="btn ghost" data-prev>Back</button>
+          <button class="btn primary" id="seeResults">See my programs</button>
+        </div>
+      </fieldset>
+    </form>
+  </main>
+
+  <section class="card results" id="results">
+    <h2>Likely Programs & Next Steps</h2>
+    <div id="summary" class="chips" aria-live="polite"></div>
+    <div id="programs" class="grid" style="margin-top:16px"></div>
+    <p class="hint" style="margin-top:12px">Amounts are typical ranges based on current program guidance; utilities and NYSERDA must verify final incentives. Combine with federal incentives where allowed.</p>
+  </section>
+
+  <footer>
+    <small>Built as a simple, client‑side tool. No data is sent anywhere. You can save this page and host it yourself.</small>
+  </footer>
+
+<script>
+// --- Program rule set (simplified but robust) ---
+const RULES = {
+  cleanHeat: {
+    id: 'cleanHeat',
+    name: 'NYS Clean Heat (Heat Pumps)',
+    utilReq: ['National Grid','NYSEG','RG&E'],
+    qualifies(f){
+      const hp = f.proj.has('ashp') || f.proj.has('gshp') || f.proj.has('hpwh');
+      return hp && this.utilReq.includes(f.utility);
+    },
+    detail(f){
+      const lmi = (f.income==='lmi'||f.income==='unsure');
+      const base = 'Typical utility-administered rebates for heat pumps; higher for oil/propane conversions and for LMI households.';
+      const amt = lmi ? 'Up to ~$5,000+ (LMI tiers); geothermal can be higher.' : 'About $500–$2,000 per system (utility dependent).';
+      return {amount: amt, copy: base};
+    },
+    links: [
+      {label:'Check eligibility & contractors (NYSERDA)', href:'https://www.nyserda.ny.gov/'},
+      {label:'Your utility’s rebate portal', href:'#utility-portal'}
+    ]
+  },
+  empower: {
+    id: 'empower',
+    name: 'EmPower+ (Energy Efficiency & Electrification)',
+    utilReq: ['National Grid','NYSEG','RG&E','other'],
+    qualifies(f){
+      const home = f.resType==='single' || f.resType==='2to4';
+      const lmiLikely = (f.income==='lmi'||f.income==='unsure');
+      const hasScope = f.proj.has('ashp')||f.proj.has('gshp')||f.proj.has('weather')||f.proj.has('hpwh');
+      return home && lmiLikely && hasScope;
+    },
+    detail(){
+      return {amount:'Up to ~$14,000 combined upgrades', copy:'Covers heat pumps and weatherization for income-eligible households (≤~80% AMI). Includes required home energy assessment.'};
+    },
+    links:[{label:'Apply / learn more (NYSERDA)', href:'https://www.nyserda.ny.gov/'}]
+  },
+  comfortHome:{
+    id:'comfortHome',
+    name:'Comfort Home (Weatherization + Heat Pumps)',
+    utilReq:['National Grid','NYSEG','RG&E','other'],
+    qualifies(f){
+      const home = f.resType==='single'||f.resType==='2to4';
+      const hasWeather = f.proj.has('weather');
+      const hasHP = f.proj.has('ashp')||f.proj.has('gshp');
+      return home && (hasWeather || hasHP);
+    },
+    detail(f){
+      const both = (f.proj.has('weather') && (f.proj.has('ashp')||f.proj.has('gshp')));
+      const amt = both? 'Up to ~$3,500 for combined upgrades' : '~$1,000–$2,000 for weatherization or heat pump only';
+      return {amount:amt, copy:'Requires energy audit and pre-approval; prioritize cold-climate heat pumps in colder counties.'};
+    },
+    links:[{label:'Program overview', href:'https://www.nyserda.ny.gov/'}]
+  },
+  utilityRebates:{
+    id:'utilityRebates',
+    name:'Utility-Specific Rebates (HVAC & Thermostats)',
+    utilReq:['National Grid','NYSEG','RG&E'],
+    qualifies(f){
+      return this.utilReq.includes(f.utility) && (
+        f.proj.has('ashp')||f.proj.has('gshp')||f.proj.has('controls')||f.proj.has('furnace'));
+    },
+    detail(f){
+      let amt='Typical: $300–$1,500 depending on utility and measure';
+      if(f.utility==='National Grid') amt='National Grid: ~$1,000 ASHP; ~$1,500 GSHP; ~$300 thermostat; ~$500 high‑efficiency gas furnace';
+      if(f.utility==='NYSEG'||f.utility==='RG&E') amt='NYSEG/RG&E: ~$1,000 ASHP; ~$500 ECM furnace; ~$300 thermostat; +$500 LMI adders in some cases';
+      return {amount:amt, copy:'Submit proof of purchase within 60–90 days; install via participating contractors.'};
+    },
+    links:[{label:'Find your utility page', href:'#utility-portal'}]
+  },
+  multifamily:{
+    id:'multifamily',
+    name:'Multifamily Energy Efficiency Program',
+    utilReq:['National Grid','NYSEG','RG&E','other'],
+    qualifies(f){
+      return f.resType==='5plus';
+    },
+    detail(){
+      return {amount:'Custom ~$1,000–$5,000 per system (varies)', copy:'Requires energy audit; higher incentives for buildings with LMI tenants.'};
+    },
+    links:[{label:'Owner/manager info (NYSERDA)', href:'https://www.nyserda.ny.gov/'}]
+  },
+  elecUpgrades:{
+    id:'elecUpgrades',
+    name:'Electrical Upgrade Incentives',
+    utilReq:['National Grid','NYSEG','RG&E','other'],
+    qualifies(f){
+      return f.elecUp;
+    },
+    detail(){
+      return {amount:'~$500–$2,000 toward panel/wiring', copy:'Support for electrical work needed to install heat pumps; higher for LMI households.'};
+    },
+    links:[{label:'Learn more', href:'https://www.nyserda.ny.gov/'}]
+  }
+};
+
+function $(q,root=document){return root.querySelector(q)}
+function $all(q,root=document){return [...root.querySelectorAll(q)]}
+
+(function init(){
+  const form = $('#flow');
+  const steps = $all('fieldset');
+  let step = 1;
+
+  function setStep(n){
+    step = n; steps.forEach(fs=>fs.classList.toggle('active', +fs.dataset.step===n));
+    for(let i=1;i<=4;i++){ $('#dot-'+i).classList.toggle('active', i<=n); }
+    $('#progbar').style.width = (n*25)+"%";
+  }
+
+  form.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-next],[data-prev]');
+    if(!btn) return;
+    e.preventDefault();
+    if(btn.hasAttribute('data-next')){
+      // basic required check within current step
+      const current = steps.find(fs=>fs.classList.contains('active'));
+      const required = $all('[required]', current);
+      for(const el of required){
+        if((el.type==='radio' || el.type==='checkbox')){
+          const name = el.name; const groupChecked = current.querySelector(`[name="${name}"]:checked`);
+          if(!groupChecked){ el.focus(); return; }
+        } else if(!el.value){ el.focus(); return; }
+      }
+      setStep(Math.min(4, step+1));
+    } else {
+      setStep(Math.max(1, step-1));
+    }
+  });
+
+  $('#seeResults').addEventListener('click', (e)=>{
+    e.preventDefault();
+    const f = readForm();
+    const programs = evaluate(f);
+    renderSummary(f);
+    renderPrograms(programs);
+    $('#results').classList.add('active');
+    window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
+  });
+
+  function readForm(){
+    const proj = new Set($all('input[name="proj"]:checked').map(i=>i.value));
+    const income = $('input[name="income"]:checked')?.value || 'unsure';
+    const tenure = $('input[name="tenure"]:checked')?.value || '';
+    const f = {
+      county: $('#county').value.trim(),
+      utility: $('#utility').value || 'other',
+      resType: $('#resType').value,
+      tenure,
+      heatFuel: $('#heatFuel').value,
+      income,
+      proj,
+      elecUp: $('#elecUp').checked
+    };
+    return f;
+  }
+
+  function evaluate(f){
+    const out = [];
+    Object.values(RULES).forEach(rule=>{
+      try{
+        if(rule.qualifies(f)){
+          out.push({id:rule.id, name:rule.name, detail:rule.detail(f), links:rule.links});
+        }
+      }catch(err){console.error('Rule error', rule.id, err)}
+    });
+    // sort: LMI-centric and big-ticket at top
+    const order = ['empower','cleanHeat','comfortHome','utilityRebates','elecUpgrades','multifamily'];
+    out.sort((a,b)=> order.indexOf(a.id)-order.indexOf(b.id));
+    return out;
+  }
+
+  function renderSummary(f){
+    const wrap = $('#summary');
+    wrap.innerHTML = '';
+    const chips = [
+      f.county? `County/City: ${escapeHtml(f.county)}`: null,
+      `Utility: ${escapeHtml(f.utility)}`,
+      `Home: ${labelResType(f.resType)}`,
+      `Heating: ${escapeHtml(f.heatFuel||'—')}`,
+      `Income: ${labelIncome(f.income)}`,
+      f.proj.size? `Project: ${[...f.proj].map(h=>h.toUpperCase()).join(', ')}`: null,
+      f.elecUp? 'May need electrical upgrade': null
+    ].filter(Boolean);
+    chips.forEach(t=>{
+      const s=document.createElement('span'); s.className='chip'; s.textContent=t; wrap.appendChild(s);
+    });
+  }
+
+  function renderPrograms(list){
+    const wrap = $('#programs');
+    wrap.innerHTML='';
+    if(!list.length){
+      wrap.innerHTML = `<div class="note">No obvious matches from your answers. Try selecting a heat pump or weatherization project, or choose your utility.</div>`;
+      return;
+    }
+    list.forEach(item=>{
+      const card = document.createElement('div'); card.className='card';
+      card.innerHTML = `
+        <h3 style="margin:0 0 6px">${escapeHtml(item.name)}</h3>
+        <div class="badge ok">Likely eligible</div>
+        <p style="margin:8px 0 6px"><strong>Typical incentive:</strong> ${escapeHtml(item.detail.amount)}</p>
+        <p class="hint" style="margin:0 0 8px">${escapeHtml(item.detail.copy)}</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          ${item.links.map(l=>`<a class="chip" href="${l.href}" target="_blank" rel="noopener">${l.label}</a>`).join('')}
+        </div>
+      `;
+      wrap.appendChild(card);
+    });
+  }
+
+  function labelResType(v){
+    return v==='single'? 'Single‑family' : v==='2to4' ? '2–4 unit' : v==='5plus' ? '5+ units' : '—';
+  }
+  function labelIncome(v){
+    return v==='lmi'? 'LMI (≤~80% AMI)' : v==='above' ? 'Above LMI' : 'Not sure';
+  }
+  function escapeHtml(s){return s.replace(/[&<>\"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
+})();
+</script>
+</body>
+</html>
